@@ -1,0 +1,7 @@
+scrape_configs:
+- job_name: grafana
+  scrape_interval: 5s
+  static_configs:
+  - targets:
+    - nodeep.zafar.studentdumbways.my.id:9100
+    - nodeget.zafar.studentdumbways.my.id:9100

@@ -1,0 +1,106 @@
+- name: update nginx
+  hosts: gateway
+  tasks:
+    - name: ensure nginx is at the latest version
+      apt:
+        name: nginx
+        state: latest
+        update_cache: yes
+      become: yes
+
+    - name: start nginx
+      service:
+        name: nginx
+        state: started
+      become: yes
+
+    - name: copy the nginx config wayshub
+      copy:
+        src: ~/ansible/resource/reverse-proxy-wayshub.conf
+        dest: /etc/nginx/sites-enabled/reverse-proxy-wayshub.conf
+      become: yes
+
+    - name: copy the nginx config prometheus
+      copy:
+        src: ~/ansible/resource/reverse-proxy-prometheus.conf
+        dest: /etc/nginx/sites-enabled/reverse-proxy-prometheus.conf
+      become: yes
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+      become: yes
+
+    - name: Install Certbot with Snap
+      snap:
+        name: certbot
+        classic: yes
+        state: present
+      become: yes
+
+    - name: Obtain and install SSL certificate with Certbot Nginx wayshub
+      command: certbot --nginx -d zafar.studentdumbways.my.id --non-interactive --agree-tos --email zafar@gmail.com
+      become: yes
+
+    - name: Obtain and install SSL certificate with Certbot Nginx prometheus
+      command: certbot --nginx -d  prometheus.zafar.studentdumbways.my.id --non-interactive --agree-tos --email zafar@gmail.com
+      become: yes
+
+    - name: Obtain and install SSL certificate with Certbot Nginx prometheus
+      command: certbot --nginx -d grafana.zafar.studentdumbways.my.id --non-interactive --agree-tos --email zafar@gmail.com
+      become: yes
+
+    - name: Obtain and install SSL certificate with Certbot Nginx prometheus
+      command: certbot --nginx -d nodeep.zafar.studentdumbways.my.id --non-interactive --agree-tos --email zafar@gmail.com
+      become: yes
+
+    - name: Obtain and install SSL certificate with Certbot Nginx prometheus
+      command: certbot --nginx -d nodeget.zafar.studentdumbways.my.id --non-interactive --agree-tos --email zafar@gmail.com
+      become: yes
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+      become: yes
+
+- name: Copy Docker Compose and Clone Git repository
+  hosts: gateway
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Create directory /home/zafar-dw18 if it doesn't exist
+      file:
+        path: /home/zafar-dw18
+        state: directory
+        owner: zafar-dw18
+        group: zafar-dw18
+        mode: '0755'
+      become: yes
+
+    - name: Copy file docker-compose
+      copy:
+        src: ~/ansible/resource/docker-compose.yml
+        dest: /home/zafar-dw18/docker-compose.yml
+        owner: zafar-dw18
+        group: zafar-dw18
+
+    - name: Clone Git repository
+      git:
+        repo: https://github.com/dumbwaysdev/wayshub-frontend
+        dest: /home/zafar-dw18/wayshub-frontend
+        clone: yes
+        force: yes
+
+    - name: Copy file Dockerfile
+      copy:
+        src: ~/ansible/resource/Dockerfile
+        dest: /home/zafar-dw18/wayshub-frontend
+        owner: zafar-dw18
+        group: zafar-dw18
+
+    - name: Run docker-compose
+      command: docker compose up -d
+      args:
+        chdir: /home/zafar-dw18/wayshub-frontend
